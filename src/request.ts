@@ -1,6 +1,6 @@
 export class OpenRequest {
-    pokemon_id: number = 0
-    iv: number = 0
+    pokemon_id?: number
+    iv?: number
     lat: number = 0
     lng: number = 0
     enc_id: string = ''

@@ -11,8 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "@types/mysql": "^2.15.15",
+    "dotenv": "^8.2.0",
     "mysql": "^2.18.1",
     "redis": "^3.0.2",
+    "request": "^2.88.2",
     "tsc-watch": "^4.2.9"
   },
   "devDependencies": {

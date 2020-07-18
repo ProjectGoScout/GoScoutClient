@@ -3,13 +3,16 @@ import { Database } from './database';
 import { OpenRequest } from './request';
 var Request = require('request');
 
+import * as dotenv from "dotenv";
+dotenv.config()
+
 // Destructure Envars
-const { 
-    DB_LOCATION = 'localhost', 
-    DB_PORT = '3306', 
-    DB_USER = 'root', 
+const {
+    DB_LOCATION = 'localhost',
+    DB_PORT = '3306',
+    DB_USER = 'root',
     DB_PASS = 'root',
-    DB_NAME = 'rdm', 
+    DB_NAME = 'rdm',
     SCOUT_LOCATION = 'http://127.0.0.1:5092/scout',
     SCOUT_KEY = 'xxxx-xxxx-xxxx-xxxx',
     CLIENT_ENDPOINT = 'http://xxx.xxx.xxx.xx',
@@ -19,11 +22,11 @@ const {
 } = process.env
 
 let db = new Database({
-    host            : DB_LOCATION,
-    port            : parseInt(DB_PORT),
-    user            : DB_USER,
-    password        : DB_PASS,
-    database        : DB_NAME
+    host: DB_LOCATION,
+    port: parseInt(DB_PORT),
+    user: DB_USER,
+    password: DB_PASS,
+    database: DB_NAME
 })
 
 // default = 3000, will be updated by the server allong the way
@@ -56,56 +59,58 @@ setInterval(async () => {
             pokemon_id: row.pokemon_id,
             iv: row.iv,
             lat: row.lat,
-            lng: row.long,
-            enc_id: row.encounter_id,
+            lng: row.lon,
+            enc_id: row.id,
             spawn_id: row.spawn_id
         })
     })
-}, 10 * 1000)
+    lastQueryTimestamp = Math.floor(new Date().getTime() / 1000)
+}, 10 * 500)
 
 let outstandingRequest: OpenRequest[] = []
 setInterval(async () => {
     if (openRequests.length > 0) {
         let request = openRequests.shift()!
-        
+        console.log(request)
+
         // set the callback; so this client can keep track and display what you received
         request.callback = CLIENT_ENDPOINT
-        
+
         // if you use RDM; the GOSCOUT will send the data directly to your RDM setup
-        if(RDM) {
+        if (RDM) {
             request.type = 'RDM'
         }
 
         // if you use MAD the GOSCOUT will send json data to your MAD setup
-        if(MAD) {
+        if (MAD) {
             request.type = 'MAD'
         }
 
         // send to GOSCOUT
         Request({
-                method:'post',
-                url: SCOUT_LOCATION, 
-                form: outstandingRequest,
-                headers: {
-                    "Authorization": "GOSCOUTKEY " + SCOUT_KEY
-                },
-                json: true,
-            }, function (error: any, response: any, body: any) {  
-                // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
-                //console.log(body, error, response);  
-        }); 
+            method: 'post',
+            url: SCOUT_LOCATION,
+            body: request,
+            headers: {
+                "Authorization": "GOSCOUTKEY " + SCOUT_KEY
+            },
+            json: true,
+        }, function (error: any, response: any, body: any) {
+            // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
+            //console.log(body, error, response);  
+        });
 
         // push to a list of already requested pokemon
         outstandingRequest.push(request!)
-    }else{
+    } else {
         console.log('there are no open request to be send')
     }
-}, 1 * 500) // send every 500ms, set slower or faster depending on your key
+}, 1 * 1000) // send every 500ms, set slower or faster depending on your key
 
 
 // manage the outstanding list
 function removeFromOutstanding(enc_id: string) {
-    for (let index = outstandingRequest.length - 1 ; index >= 0; index--) {
+    for (let index = outstandingRequest.length - 1; index >= 0; index--) {
         let request = outstandingRequest[index]
         // remove based on enc id
         if (request.enc_id == enc_id) {
@@ -122,7 +127,7 @@ function removeFromOutstanding(enc_id: string) {
 setInterval(() => {
     // call every minute to clean the outstanding list
     removeFromOutstanding('')
-}, 60 * 1000) 
+}, 60 * 1000)
 
 
 // create the http server to serve up the dashboard and stats json
@@ -146,21 +151,21 @@ var httpServer = http.createServer(function (req, res) {
             // send to GOSCOUT
             Request(
                 {
-                    method:'post',
-                    url: DATA_ENDPOINT, 
+                    method: 'post',
+                    url: DATA_ENDPOINT,
                     form: data,
                     json: true,
-                }, function (error: any, response: any, body: any) {  
+                }, function (error: any, response: any, body: any) {
                     // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
                     //console.log(body, error, response);  
                 }
-            ); 
+            );
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end('');
         });
     } else if (req.url && req.url.startsWith('/dashboard_api')) {
         res.writeHead(200, { "Content-Type": "application/json" });
-        
+
         // write a bunch of recorded stats as json
 
         res.end(JSON.stringify([]));
