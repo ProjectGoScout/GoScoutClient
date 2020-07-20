@@ -15,6 +15,7 @@ const {
     DB_NAME = 'rdm',
     SCOUT_LOCATION = 'http://127.0.0.1:5092/scout',
     SCOUT_KEY = 'xxxx-xxxx-xxxx-xxxx',
+    SCOUT_KEY_VALUE = '1500',
     CLIENT_ENDPOINT = 'http://xxx.xxx.xxx.xx',
     DATA_ENDPOINT = 'http://xxx.xxx.xxx.xx',
     RDM = true,
@@ -105,7 +106,7 @@ setInterval(async () => {
     } else {
         console.log('there are no open request to be send')
     }
-}, 1 * 1000) // send every 500ms, set slower or faster depending on your key
+}, ((parseInt(SCOUT_KEY_VALUE) / 3600) + 1) * 1000) // send every 500ms, set slower or faster depending on your key
 
 
 // manage the outstanding list
