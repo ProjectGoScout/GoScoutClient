@@ -154,7 +154,7 @@ var httpServer = http.createServer(function (req, res) {
                 {
                     method: 'post',
                     url: DATA_ENDPOINT,
-                    form: data,
+                    body: data,
                     json: true,
                 }, function (error: any, response: any, body: any) {
                     // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
