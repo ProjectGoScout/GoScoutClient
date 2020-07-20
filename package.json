@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "tsc",
-    "start": "tsc && node ./dist/index.js"
+    "start": "tsc && node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +15,8 @@
     "mysql": "^2.18.1",
     "redis": "^3.0.2",
     "request": "^2.88.2",
-    "tsc-watch": "^4.2.9"
+    "tsc-watch": "^4.2.9",
+    "typescript": "^3.9.6"
   },
   "devDependencies": {
     "@types/node": "^14.0.22",
