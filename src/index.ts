@@ -147,7 +147,8 @@ var httpServer = http.createServer(function (req, res) {
         req.on('end', () => {
             let data = JSON.parse(incomingData.join(''));
             // infer enc_id, mark completed in the cache
-            removeFromOutstanding(data.encounter.encounter_id)
+            console.log(`INCOMING DATA: Got IV for Encounter ID ${data.pokemon_encounter_id}`)
+            removeFromOutstanding(data.pokemon_encounter_id)
             // send to GOSCOUT
             Request(
                 {
