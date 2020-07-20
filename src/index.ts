@@ -51,6 +51,7 @@ setInterval(async () => {
             AND id is not null 
             AND iv is not null 
             AND first_seen_timestamp > ${lastQueryTimestamp}
+            AND expire_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 180 SECOND)
         ORDER BY iv desc
         LIMIT ${limit}`, [])
     console.log(`[query] found ${res.length} records`)
@@ -71,7 +72,6 @@ let outstandingRequest: OpenRequest[] = []
 setInterval(async () => {
     if (openRequests.length > 0) {
         let request = openRequests.shift()!
-        console.log(request)
 
         // set the callback; so this client can keep track and display what you received
         request.callback = CLIENT_ENDPOINT
