@@ -20,6 +20,7 @@ const {
     DATA_ENDPOINT = 'http://xxx.xxx.xxx.xx',
     RDM = true,
     MAD = false,
+    SCOUT_PORT = '8888'
 } = process.env
 
 let db = new Database({
@@ -177,6 +178,6 @@ var httpServer = http.createServer(function (req, res) {
 });
 
 httpServer.keepAliveTimeout = 0;
-httpServer.listen('8888', function () {
+httpServer.listen(SCOUT_PORT, function () {
     console.log(`server start at port 8888`);
 });
