@@ -59,8 +59,6 @@ setInterval(async () => {
     console.log(`[query] found ${res.length} records`)
     res.forEach(row => {
         openRequests.push(<OpenRequest>{
-            pokemon_id: row.pokemon_id,
-            iv: row.iv,
             lat: row.lat,
             lng: row.lon,
             enc_id: row.id,
@@ -179,5 +177,5 @@ var httpServer = http.createServer(function (req, res) {
 
 httpServer.keepAliveTimeout = 0;
 httpServer.listen(SCOUT_PORT, function () {
-    console.log(`server start at port 8888`);
+    console.log(`GoScout Client launched on port ${SCOUT_PORT}`);
 });
