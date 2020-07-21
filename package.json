@@ -13,6 +13,7 @@
     "axios": "^0.19.2",
     "dotenv": "^8.2.0",
     "mysql": "^2.18.1",
+    "request": "^2.88.2",
     "typescript": "^3.9.6"
   },
   "devDependencies": {

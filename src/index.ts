@@ -2,7 +2,7 @@ import * as http from 'http';
 import { Database } from './database';
 import { OpenRequest } from './request';
 import axios from 'axios'
-
+const Request = require('request');
 import * as dotenv from "dotenv";
 dotenv.config()
 
@@ -55,8 +55,8 @@ setInterval(async () => {
     // we limit to 20 per 10s, this should be faster then the api allows at a single key
     // mod this query or logic to your liking, you can also make something that mixes in pvp
     // keep in mind that there is a cap of the number of requests you can perform
-    let limit = (requestReset === 0)
-        ? 1 * dbPoll
+    let limit = (requestReset - (new Date().getTime() / 1000) < 0)
+        ? 1
         : Math.floor(
             requestRemaining / (requestReset - (new Date().getTime() / 1000)) * dbPoll
         )
