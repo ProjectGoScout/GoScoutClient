@@ -1,7 +1,6 @@
 import * as http from 'http';
 import { Database } from './database';
 import { OpenRequest } from './request';
-var Request = require('request');
 import axios from 'axios'
 
 import * as dotenv from "dotenv";
@@ -101,32 +100,7 @@ setInterval(async () => {
             request.type = 'MAD'
         }
 
-        // // send to GOSCOUT
-        // Request({
-        //     method: 'post',
-        //     url: SCOUT_LOCATION,
-        //     body: request,
-        //     headers: {
-        //         "Authorization": "GOSCOUTKEY " + SCOUT_KEY
-        //     },
-        //     json: true,
-        // }, function (error: any, response: any, body: any) {
-
-        //     if(response.statusCode == 429) {
-        //         console.log('Key depleted')
-        //     }
-
-        //     if(response.headers['X-RateLimit-Remaining'] !== 'undefined'){
-        //         requestRemaining = response.headers['X-RateLimit-Remaining']
-        //     }
-        //     if(response.headers['X-RateLimit-Reset'] !== 'undefined'){
-        //         requestReset = response.headers['X-RateLimit-Reset']
-        //     }
-        //     // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
-        //     //console.log(body, error, response);  
-        // });
-
-        instance.post('/scout', request)
+        instance.post('/', request)
             .then(function (response) {
                 if (response.status == 429) {
                     console.log('[TOKEN RATE LIMIT] : YOUR TOKEN RATE LIMIT HAS BEEN REACHED')
