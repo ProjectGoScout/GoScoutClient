@@ -2,9 +2,12 @@ import * as http from 'http';
 import { Database } from './database';
 import { OpenRequest } from './request';
 var Request = require('request');
+import axios from 'axios'
 
 import * as dotenv from "dotenv";
 dotenv.config()
+
+
 
 // Destructure Envars
 const {
@@ -31,9 +34,15 @@ let db = new Database({
     database: DB_NAME
 })
 
+const instance = axios.create({
+    baseURL: SCOUT_LOCATION,
+    timeout: 10000,
+    headers: { "Authorization": "GOSCOUTKEY " + SCOUT_KEY }
+});
+
 // default = 3000, will be updated by the server allong the way
 let requestRemaining: number = 3000
-let requestReset: number = new Date().getTime() + 3600 // an hour
+let requestReset: number = 0 // an hour
 let keySize: number = 3000
 let dbPoll = 5
 
@@ -47,7 +56,11 @@ setInterval(async () => {
     // we limit to 20 per 10s, this should be faster then the api allows at a single key
     // mod this query or logic to your liking, you can also make something that mixes in pvp
     // keep in mind that there is a cap of the number of requests you can perform
-    let limit = Math.floor(requestRemaining / (requestReset - new Date().getTime()) * dbPoll) // this will be the number of items we can do 
+    let limit = (requestReset === 0)
+        ? 1 * dbPoll
+        : Math.floor(
+            requestRemaining / (requestReset - (new Date().getTime() / 1000)) * dbPoll
+        )
     let res = await db.query(`
         SELECT * 
         FROM pokemon 
@@ -58,7 +71,7 @@ setInterval(async () => {
             AND expire_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 180 SECOND)
         ORDER BY iv desc
         LIMIT ${limit}`, [])
-    console.log(`[query] found ${res.length} records`)
+    console.log(`[DATABASE QUERY] Found ${res.length} records`)
     res.forEach(row => {
         openRequests.push(<OpenRequest>{
             lat: row.lat,
@@ -88,35 +101,55 @@ setInterval(async () => {
             request.type = 'MAD'
         }
 
-        // send to GOSCOUT
-        Request({
-            method: 'post',
-            url: SCOUT_LOCATION,
-            body: request,
-            headers: {
-                "Authorization": "GOSCOUTKEY " + SCOUT_KEY
-            },
-            json: true,
-        }, function (error: any, response: any, body: any) {
+        // // send to GOSCOUT
+        // Request({
+        //     method: 'post',
+        //     url: SCOUT_LOCATION,
+        //     body: request,
+        //     headers: {
+        //         "Authorization": "GOSCOUTKEY " + SCOUT_KEY
+        //     },
+        //     json: true,
+        // }, function (error: any, response: any, body: any) {
 
-            if(response.statusCode == 429) {
-                console.log('Key depleted')
-            }
+        //     if(response.statusCode == 429) {
+        //         console.log('Key depleted')
+        //     }
 
-            if(response.headers['X-RateLimit-Remaining'] !== 'undefined'){
-                requestRemaining = response.headers['X-RateLimit-Remaining']
-            }
-            if(response.headers['X-RateLimit-Reset'] !== 'undefined'){
-                requestReset = response.headers['X-RateLimit-Reset']
-            }
-            // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
-            //console.log(body, error, response);  
-        });
+        //     if(response.headers['X-RateLimit-Remaining'] !== 'undefined'){
+        //         requestRemaining = response.headers['X-RateLimit-Remaining']
+        //     }
+        //     if(response.headers['X-RateLimit-Reset'] !== 'undefined'){
+        //         requestReset = response.headers['X-RateLimit-Reset']
+        //     }
+        //     // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
+        //     //console.log(body, error, response);  
+        // });
+
+        instance.post('/scout', request)
+            .then(function (response) {
+                if (response.status == 429) {
+                    console.log('[TOKEN RATE LIMIT] : YOUR TOKEN RATE LIMIT HAS BEEN REACHED')
+                }
+
+                if (response.headers['x-ratelimit-remaining']) {
+                    requestRemaining = response.headers['x-ratelimit-remaining']
+                }
+                if (response.headers['x-ratelimit-reset']) {
+                    requestReset = response.headers['x-ratelimit-reset']
+                }
+                if (response.headers['x-ratelimit-limit']) {
+                    keySize = response.headers['x-ratelimit-limit']
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
 
         // push to a list of already requested pokemon
         outstandingRequest.push(request!)
     } else {
-        console.log('there are no open request to be send')
+        // console.log('there are no open request to be send')
     }
 }, 100) // send every 100ms, set slower or faster depending on your key
 
@@ -138,9 +171,10 @@ function removeFromOutstanding(enc_id: string) {
     }
 }
 setInterval(() => {
+    console.log(`[KEY STATS] REMAINING: ${requestRemaining}, RESET: ${requestReset}`)
     // call every minute to clean the outstanding list
     removeFromOutstanding('')
-}, 60 * 1000)
+}, 10 * 1000)
 
 
 // create the http server to serve up the dashboard and stats json

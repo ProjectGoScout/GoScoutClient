@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/axios": "^0.14.0",
     "@types/mysql": "^2.15.15",
+    "axios": "^0.19.2",
     "dotenv": "^8.2.0",
     "mysql": "^2.18.1",
     "redis": "^3.0.2",
