@@ -33,7 +33,9 @@ let db = new Database({
 
 // default = 3000, will be updated by the server allong the way
 let requestRemaining: number = 3000
+let requestReset: number = new Date().getTime() + 3600 // an hour
 let keySize: number = 3000
+let dbPoll = 5
 
 // timestamp in unix time
 let lastQueryTimestamp = Math.floor(new Date().getTime() / 1000)
@@ -45,7 +47,7 @@ setInterval(async () => {
     // we limit to 20 per 10s, this should be faster then the api allows at a single key
     // mod this query or logic to your liking, you can also make something that mixes in pvp
     // keep in mind that there is a cap of the number of requests you can perform
-    let limit = 10 + ((requestRemaining / keySize) * 10)
+    let limit = Math.floor(requestRemaining / (requestReset - new Date().getTime()) * dbPoll) // this will be the number of items we can do 
     let res = await db.query(`
         SELECT * 
         FROM pokemon 
@@ -66,7 +68,7 @@ setInterval(async () => {
         })
     })
     lastQueryTimestamp = Math.floor(new Date().getTime() / 1000)
-}, 10 * 500)
+}, dbPoll * 1000)
 
 let outstandingRequest: OpenRequest[] = []
 setInterval(async () => {
@@ -96,6 +98,17 @@ setInterval(async () => {
             },
             json: true,
         }, function (error: any, response: any, body: any) {
+
+            if(response.statusCode == 429) {
+                console.log('Key depleted')
+            }
+
+            if(response.headers['X-RateLimit-Remaining'] !== 'undefined'){
+                requestRemaining = response.headers['X-RateLimit-Remaining']
+            }
+            if(response.headers['X-RateLimit-Reset'] !== 'undefined'){
+                requestReset = response.headers['X-RateLimit-Reset']
+            }
             // you could be debugging.. turn this on; it might spam, allot, but you can see what you are sending / receiving back
             //console.log(body, error, response);  
         });
@@ -105,7 +118,7 @@ setInterval(async () => {
     } else {
         console.log('there are no open request to be send')
     }
-}, ((parseInt(SCOUT_KEY_VALUE) / 3600) + 1) * 1000) // send every 500ms, set slower or faster depending on your key
+}, 100) // send every 100ms, set slower or faster depending on your key
 
 
 // manage the outstanding list
