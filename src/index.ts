@@ -25,7 +25,8 @@ const {
     SCOUT_PORT = '8888',
     MIN_RESCAN_IV = '90',
     MIN_RESCAN_TIME_REMAINING = '180',
-    ENABLE_PVP = true
+    ENABLE_PVP = true,
+    ENABLE_NUNDOS = true
 } = process.env
 
 let db = new Database({
@@ -71,7 +72,8 @@ setInterval(async () => {
         AND first_seen_timestamp > ${lastQueryTimestamp} 
         AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
         AND (
-          iv > ${parseInt(MIN_RESCAN_IV)} 
+          iv >= ${parseInt(MIN_RESCAN_IV)} 
+          ${ENABLE_NUNDOS ? `OR iv = 0 ` : ``}
           ${ ENABLE_PVP
             ? `OR 
                 (
