@@ -15,14 +15,17 @@ const {
     DB_USER = 'root',
     DB_PASS = 'root',
     DB_NAME = 'rdm',
-    SCOUT_LOCATION = 'http://127.0.0.1:5092/scout',
+    SCOUT_LOCATION = 'https://scout.levelthirty.com/scout',
     SCOUT_KEY = 'xxxx-xxxx-xxxx-xxxx',
     SCOUT_KEY_VALUE = '1500',
     CLIENT_ENDPOINT = 'http://xxx.xxx.xxx.xx',
     DATA_ENDPOINT = 'http://xxx.xxx.xxx.xx',
     RDM = true,
     MAD = false,
-    SCOUT_PORT = '8888'
+    SCOUT_PORT = '8888',
+    MIN_RESCAN_IV = '90',
+    MIN_RESCAN_TIME_REMAINING = '180',
+    ENABLE_PVP = true
 } = process.env
 
 let db = new Database({
@@ -42,7 +45,7 @@ const instance = axios.create({
 // default = 3000, will be updated by the server allong the way
 let requestRemaining: number = 3000
 let requestReset: number = 0 // an hour
-let keySize: number = 3000
+let keySize: number = parseInt(SCOUT_KEY_VALUE)
 let dbPoll = 5
 
 // timestamp in unix time
@@ -61,15 +64,30 @@ setInterval(async () => {
             requestRemaining / (requestReset - (new Date().getTime() / 1000)) * dbPoll
         )
     let res = await db.query(`
-        SELECT * 
-        FROM pokemon 
-        WHERE spawn_id is not null
-            AND id is not null 
-            AND iv is not null 
-            AND first_seen_timestamp > ${lastQueryTimestamp}
-            AND expire_timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 180 SECOND)
-        ORDER BY iv desc
-        LIMIT ${limit}`, [])
+    SELECT * 
+    FROM pokemon 
+    WHERE spawn_id is not null
+        AND id is not null
+        AND first_seen_timestamp > ${lastQueryTimestamp} 
+        AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
+        AND (
+          iv > ${parseInt(MIN_RESCAN_IV)} 
+          ${ ENABLE_PVP
+            ? `OR 
+                (
+                (atk_iv BETWEEN 0 AND 2) AND 
+                (def_iv BETWEEN 13 AND 15) AND 
+                (sta_iv BETWEEN 13 AND 15)
+                )`
+            : ``
+        }
+        )
+    ORDER BY iv desc
+    LIMIT ${limit}`, [])
+
+
+
+
     console.log(`[DATABASE QUERY] Found ${res.length} records`)
     res.forEach(row => {
         openRequests.push(<OpenRequest>{
