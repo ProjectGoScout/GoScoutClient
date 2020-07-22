@@ -84,10 +84,6 @@ setInterval(async () => {
         )
     ORDER BY iv desc
     LIMIT ${limit}`, [])
-
-
-
-
     console.log(`[DATABASE QUERY] Found ${res.length} records`)
     res.forEach(row => {
         openRequests.push(<OpenRequest>{
