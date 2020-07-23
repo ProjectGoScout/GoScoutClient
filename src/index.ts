@@ -18,6 +18,7 @@ const {
     DB_NAME = 'rdm',
     SCOUT_LOCATION = 'https://scout.levelthirty.com/scout',
     SCOUT_KEY = 'xxxx-xxxx-xxxx-xxxx',
+    SCOUT_RETRY_AFTER = '30',
     SCOUT_KEY_VALUE = '1500',
     CLIENT_ENDPOINT = 'http://xxx.xxx.xxx.xx',
     DATA_ENDPOINT = 'http://xxx.xxx.xxx.xx',
@@ -102,7 +103,8 @@ setInterval(async () => {
                 lat: row.lat,
                 lng: row.lon,
                 enc_id: row.id,
-                spawn_id: row.spawn_id
+                spawn_id: row.spawn_id,
+                added_at: new Date().getTime()
             })
         })
 
@@ -112,6 +114,35 @@ setInterval(async () => {
 
 let outstandingRequest: OpenRequest[] = []
 setInterval(async () => {
+
+    outstandingRequest.forEach(or => {
+        if (or.added_at + parseInt(SCOUT_RETRY_AFTER) *1000 < new Date().getTime()){
+            // retry
+            console.log(`[QUEUEMANAGER] SINGLE-RETRY ${or.enc_id}`)
+            console.log(or)
+
+            removeFromOutstanding(or.enc_id)
+            instance.post('/', or)
+            .then(function (response) {
+                if (response.status === 200) {
+                    console.log('Request sent:', or.enc_id)
+                }
+                if (response.headers['x-ratelimit-remaining']) {
+                    requestRemaining = response.headers['x-ratelimit-remaining']
+                }
+                if (response.headers['x-ratelimit-reset']) {
+                    requestReset = response.headers['x-ratelimit-reset']
+                }
+                if (response.headers['x-ratelimit-limit']) {
+                    keySize = response.headers['x-ratelimit-limit']
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        }
+    })
+
     if (openRequests.length > 0) {
         let request = openRequests.shift()!
 
@@ -153,7 +184,7 @@ setInterval(async () => {
         if (!openEncounters.includes(request.enc_id)) {
             openEncounters.push(request.enc_id)
         } else {
-            console.log('DUPIATE ENTRY')
+            console.log('DUPLICATE ENTRY')
         }
     } else {
         // console.log('there are no open request to be send')
