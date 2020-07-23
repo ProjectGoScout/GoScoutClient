@@ -53,6 +53,7 @@ let dbPoll = 10
 let lastQueryTimestamp = Math.floor(new Date().getTime() / 1000)
 // contains the requests backlog
 let openRequests: OpenRequest[] = []
+let openEncounters: string[] = []
 
 let isQuerying = false;
 // for an async control loop that fills up a queue, run every 10s
@@ -69,11 +70,13 @@ setInterval(async () => {
                 requestRemaining / (requestReset - (new Date().getTime() / 1000)) * dbPoll
             )
         const queryTime = Math.floor(new Date().getTime() / 1000)
+
         let res = await db.query(`
                 SELECT * 
                 FROM pokemon 
-                WHERE spawn_id is not null
-                    AND id is not null
+                WHERE spawn_id IS NOT NULL
+                    AND id IS NOT NULL
+                    AND id NOT IN (${'"' + openEncounters.join('","') + '"'})
                     AND updated > ${lastQueryTimestamp} 
                     AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
                     AND (
@@ -166,6 +169,13 @@ function removeFromOutstanding(enc_id: string) {
         if (request.added_at + 300 < Math.floor(new Date().getTime() / 1000)) {
             // its been 5 min now, lets remove, this aint coming
             outstandingRequest.splice(index, 1)
+        }
+    }
+    for (let index = openEncounters.length - 1; index >= 0; index--) {
+        let oldEnc = openEncounters[index]
+        if (enc_id == oldEnc) {
+            openEncounters.splice(index, 1)
+            continue
         }
     }
 }
