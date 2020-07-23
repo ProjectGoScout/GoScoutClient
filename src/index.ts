@@ -74,7 +74,7 @@ setInterval(async () => {
                 FROM pokemon 
                 WHERE spawn_id is not null
                     AND id is not null
-                    AND first_seen_timestamp > ${lastQueryTimestamp} 
+                    AND updated > ${lastQueryTimestamp} 
                     AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
                     AND (
                     iv >= ${parseInt(MIN_RESCAN_IV)} 
