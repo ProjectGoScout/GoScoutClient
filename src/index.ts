@@ -47,55 +47,63 @@ const instance = axios.create({
 let requestRemaining: number = 3000
 let requestReset: number = 0 // an hour
 let keySize: number = parseInt(SCOUT_KEY_VALUE)
-let dbPoll = 5
+let dbPoll = 10
 
 // timestamp in unix time
 let lastQueryTimestamp = Math.floor(new Date().getTime() / 1000)
 // contains the requests backlog
 let openRequests: OpenRequest[] = []
+
+let isQuerying = false;
 // for an async control loop that fills up a queue, run every 10s
 setInterval(async () => {
     // we want a pokemon with iv, that has been seen in the last 5min, highest iv first
     // we limit to 20 per 10s, this should be faster then the api allows at a single key
     // mod this query or logic to your liking, you can also make something that mixes in pvp
     // keep in mind that there is a cap of the number of requests you can perform
-    let limit = (requestReset - (new Date().getTime() / 1000) < 0)
-        ? 1
-        : Math.floor(
-            requestRemaining / (requestReset - (new Date().getTime() / 1000)) * dbPoll
-        )
-    let res = await db.query(`
-    SELECT * 
-    FROM pokemon 
-    WHERE spawn_id is not null
-        AND id is not null
-        AND first_seen_timestamp > ${lastQueryTimestamp} 
-        AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
-        AND (
-          iv >= ${parseInt(MIN_RESCAN_IV)} 
-          ${ENABLE_NUNDOS ? `OR iv = 0 ` : ``}
-          ${ ENABLE_PVP
-            ? `OR 
-                (
-                (atk_iv BETWEEN 0 AND 2) AND 
-                (def_iv BETWEEN 13 AND 15) AND 
-                (sta_iv BETWEEN 13 AND 15)
-                )`
-            : ``
-        }
-        )
-    ORDER BY iv desc
-    LIMIT ${limit}`, [])
-    console.log(`[DATABASE QUERY] Found ${res.length} records`)
-    res.forEach(row => {
-        openRequests.push(<OpenRequest>{
-            lat: row.lat,
-            lng: row.lon,
-            enc_id: row.id,
-            spawn_id: row.spawn_id
+    if (!isQuerying) {
+        isQuerying = true
+        let limit = (requestReset - (new Date().getTime() / 1000) < 0)
+            ? 1
+            : Math.floor(
+                requestRemaining / (requestReset - (new Date().getTime() / 1000)) * dbPoll
+            )
+        const queryTime = Math.floor(new Date().getTime() / 1000)
+        let res = await db.query(`
+                SELECT * 
+                FROM pokemon 
+                WHERE spawn_id is not null
+                    AND id is not null
+                    AND first_seen_timestamp > ${lastQueryTimestamp} 
+                    AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
+                    AND (
+                    iv >= ${parseInt(MIN_RESCAN_IV)} 
+                    ${ENABLE_NUNDOS ? `OR iv = 0 ` : ``}
+                    ${ ENABLE_PVP
+                ? `OR 
+                                (
+                                (atk_iv BETWEEN 0 AND 2) AND 
+                                (def_iv BETWEEN 13 AND 15) AND 
+                                (sta_iv BETWEEN 13 AND 15)
+                                )`
+                : ``
+            }
+                    )
+                ORDER BY iv desc
+                LIMIT ${limit}`, [])
+        lastQueryTimestamp = queryTime
+        console.log(`[DATABASE QUERY] Found ${res.length} records`)
+        res.forEach(row => {
+            openRequests.push(<OpenRequest>{
+                lat: row.lat,
+                lng: row.lon,
+                enc_id: row.id,
+                spawn_id: row.spawn_id
+            })
         })
-    })
-    lastQueryTimestamp = Math.floor(new Date().getTime() / 1000)
+
+        isQuerying = false
+    }
 }, dbPoll * 1000)
 
 let outstandingRequest: OpenRequest[] = []
@@ -118,6 +126,7 @@ setInterval(async () => {
 
         instance.post('/', request)
             .then(function (response) {
+                console.log('Request sent')
                 if (response.status == 429) {
                     console.log('[TOKEN RATE LIMIT] : YOUR TOKEN RATE LIMIT HAS BEEN REACHED')
                 }
