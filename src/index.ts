@@ -77,7 +77,7 @@ setInterval(async () => {
                 WHERE spawn_id IS NOT NULL
                     AND id IS NOT NULL
                     AND id NOT IN (${'"' + openEncounters.join('","') + '"'})
-                    AND updated > ${lastQueryTimestamp} 
+                    AND changed > ${lastQueryTimestamp} 
                     AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
                     AND (
                     iv >= ${parseInt(MIN_RESCAN_IV)} 
