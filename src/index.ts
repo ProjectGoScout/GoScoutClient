@@ -4,6 +4,7 @@ import { OpenRequest } from './request';
 import axios from 'axios'
 const Request = require('request');
 import * as dotenv from "dotenv";
+import { Console } from 'console';
 dotenv.config()
 
 
@@ -132,9 +133,6 @@ setInterval(async () => {
                 if (response.status === 200) {
                     console.log('Request sent:', request.enc_id)
                 }
-                if (response.status == 429) {
-                    console.log('[TOKEN RATE LIMIT] : YOUR TOKEN RATE LIMIT HAS BEEN REACHED')
-                }
 
                 if (response.headers['x-ratelimit-remaining']) {
                     requestRemaining = response.headers['x-ratelimit-remaining']
@@ -147,7 +145,10 @@ setInterval(async () => {
                 }
             })
             .catch(function (error) {
-                console.log(error);
+                if (error.res.statusCode === 429) {
+                    console.log(`[KEY MANAGER] Key Depleted.`)
+                    openRequests.push(request)
+                }
             });
 
         // push to a list of already requested pokemon
