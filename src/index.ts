@@ -150,6 +150,7 @@ setInterval(async () => {
 
         // push to a list of already requested pokemon
         outstandingRequest.push(request!)
+        openEncounters.push(request.enc_id)
     } else {
         // console.log('there are no open request to be send')
     }
