@@ -145,10 +145,7 @@ setInterval(async () => {
                 }
             })
             .catch(function (error) {
-                if (error.res.statusCode === 429) {
-                    console.log(`[KEY MANAGER] Key Depleted.`)
-                    openRequests.push(request)
-                }
+                console.log(error.response)
             });
 
         // push to a list of already requested pokemon
