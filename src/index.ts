@@ -129,7 +129,9 @@ setInterval(async () => {
 
         instance.post('/', request)
             .then(function (response) {
-                console.log('Request sent:', request.enc_id)
+                if (response.status === 200) {
+                    console.log('Request sent:', request.enc_id)
+                }
                 if (response.status == 429) {
                     console.log('[TOKEN RATE LIMIT] : YOUR TOKEN RATE LIMIT HAS BEEN REACHED')
                 }
