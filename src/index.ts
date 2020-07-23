@@ -150,7 +150,11 @@ setInterval(async () => {
 
         // push to a list of already requested pokemon
         outstandingRequest.push(request!)
-        openEncounters.push(request.enc_id)
+        if (!openEncounters.includes(request.enc_id)) {
+            openEncounters.push(request.enc_id)
+        } else {
+            console.log('DUPIATE ENTRY')
+        }
     } else {
         // console.log('there are no open request to be send')
     }
