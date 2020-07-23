@@ -181,7 +181,7 @@ function removeFromOutstanding(enc_id: string) {
 }
 setInterval(() => {
     console.log(`[KEY STATS] REMAINING: ${requestRemaining}, RESET: ${requestReset}`)
-    console.log(`[QUEUEMANAGER] OUTSTANDING REQUESTS: ${outstandingRequest.length}`)
+    console.log(`[QUEUEMANAGER] OUTSTANDING REQUESTS: ${outstandingRequest.length}`, openEncounters)
     // call every minute to clean the outstanding list
     removeFromOutstanding('')
 }, 10 * 1000)
