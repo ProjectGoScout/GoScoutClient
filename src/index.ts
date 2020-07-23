@@ -119,7 +119,6 @@ setInterval(async () => {
         if (or.added_at + parseInt(SCOUT_RETRY_AFTER) *1000 < new Date().getTime()){
             // retry
             console.log(`[QUEUEMANAGER] SINGLE-RETRY ${or.enc_id}`)
-            console.log(or)
 
             removeFromOutstanding(or.enc_id)
             instance.post('/', or)
