@@ -124,7 +124,7 @@ setInterval(async () => {
             instance.post('/', or)
             .then(function (response) {
                 if (response.status === 200) {
-                    console.log('Request sent:', or.enc_id)
+                    // console.log('Request sent:', or.enc_id)
                 }
                 if (response.headers['x-ratelimit-remaining']) {
                     requestRemaining = response.headers['x-ratelimit-remaining']
@@ -161,7 +161,7 @@ setInterval(async () => {
         instance.post('/', request)
             .then(function (response) {
                 if (response.status === 200) {
-                    console.log('Request sent:', request.enc_id)
+                    // console.log('Request sent:', request.enc_id)
                 }
 
                 if (response.headers['x-ratelimit-remaining']) {
