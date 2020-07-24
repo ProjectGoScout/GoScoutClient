@@ -86,6 +86,16 @@ setInterval(async () => {
                 END as score
                 FROM pokemon 
                 WHERE spawn_id IS NOT NULL
+                    AND (
+                        iv >= 90 OR
+                        iv = 0 OR
+                        (
+                        
+                        (atk_iv BETWEEN 0 AND 2) AND 
+                        (def_iv BETWEEN 13 AND 15) AND 
+                        (sta_iv BETWEEN 13 AND 15)
+                        )
+                    )
                     AND id IS NOT NULL
                     AND id NOT IN (${'"' + openEncounters.join('","') + '"'})
                     AND changed > ${lastQueryTimestamp} 
