@@ -74,7 +74,16 @@ setInterval(async () => {
         const queryTime = Math.floor(new Date().getTime() / 1000)
 
         let res = await db.query(`
-                SELECT * 
+                SELECT * ,
+                CASE
+                WHEN  (
+                        (atk_iv BETWEEN 0 AND 2) AND 
+                        (def_iv BETWEEN 13 AND 15) AND 
+                        (sta_iv BETWEEN 13 AND 15)
+                    ) THEN 5
+                WHEN iv = 0 THEN 3
+                ELSE 100 - iv
+                END as score
                 FROM pokemon 
                 WHERE spawn_id IS NOT NULL
                     AND id IS NOT NULL
@@ -82,7 +91,6 @@ setInterval(async () => {
                     AND changed > ${lastQueryTimestamp} 
                     AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
                     AND (
-                    iv >= ${parseInt(MIN_RESCAN_IV)} 
                     ${ENABLE_NUNDOS ? `OR iv = 0 ` : ``}
                     ${ ENABLE_PVP
                 ? `OR 
@@ -94,7 +102,7 @@ setInterval(async () => {
                 : ``
             }
                     )
-                ORDER BY iv desc
+                ORDER BY score desc
                 LIMIT ${limit}`, [])
         lastQueryTimestamp = queryTime
         console.log(`[DATABASE QUERY] Found ${res.length} records`)
@@ -116,29 +124,29 @@ let outstandingRequest: OpenRequest[] = []
 setInterval(async () => {
 
     outstandingRequest.forEach(or => {
-        if (or.added_at + parseInt(SCOUT_RETRY_AFTER) *1000 < new Date().getTime()){
+        if (or.added_at + parseInt(SCOUT_RETRY_AFTER) * 1000 < new Date().getTime()) {
             // retry
             console.log(`[QUEUEMANAGER] SINGLE-RETRY ${or.enc_id}`)
 
             removeFromOutstanding(or.enc_id)
             instance.post('/', or)
-            .then(function (response) {
-                if (response.status === 200) {
-                    // console.log('Request sent:', or.enc_id)
-                }
-                if (response.headers['x-ratelimit-remaining']) {
-                    requestRemaining = response.headers['x-ratelimit-remaining']
-                }
-                if (response.headers['x-ratelimit-reset']) {
-                    requestReset = response.headers['x-ratelimit-reset']
-                }
-                if (response.headers['x-ratelimit-limit']) {
-                    keySize = response.headers['x-ratelimit-limit']
-                }
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
+                .then(function (response) {
+                    if (response.status === 200) {
+                        // console.log('Request sent:', or.enc_id)
+                    }
+                    if (response.headers['x-ratelimit-remaining']) {
+                        requestRemaining = response.headers['x-ratelimit-remaining']
+                    }
+                    if (response.headers['x-ratelimit-reset']) {
+                        requestReset = response.headers['x-ratelimit-reset']
+                    }
+                    if (response.headers['x-ratelimit-limit']) {
+                        keySize = response.headers['x-ratelimit-limit']
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         }
     })
 
