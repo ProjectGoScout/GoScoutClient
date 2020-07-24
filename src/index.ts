@@ -87,8 +87,7 @@ setInterval(async () => {
                 FROM pokemon 
                 WHERE spawn_id IS NOT NULL
                     AND (
-                        iv >= 90 OR
-                        iv = 0 OR
+                        iv >= 0 OR
                         (
                         
                         (atk_iv BETWEEN 0 AND 2) AND 
