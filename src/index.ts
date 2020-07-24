@@ -90,7 +90,7 @@ setInterval(async () => {
                     AND id NOT IN (${'"' + openEncounters.join('","') + '"'})
                     AND changed > ${lastQueryTimestamp} 
                     AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
-                ORDER BY score desc
+                ORDER BY score asc
                 LIMIT ${limit}`, [])
         lastQueryTimestamp = queryTime
         console.log(`[DATABASE QUERY] Found ${res.length} records`)
