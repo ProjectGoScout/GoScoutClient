@@ -90,18 +90,6 @@ setInterval(async () => {
                     AND id NOT IN (${'"' + openEncounters.join('","') + '"'})
                     AND changed > ${lastQueryTimestamp} 
                     AND expire_timestamp > UNIX_TIMESTAMP(NOW() + INTERVAL ${parseInt(MIN_RESCAN_TIME_REMAINING)} SECOND)
-                    AND (
-                    ${ENABLE_NUNDOS ? `OR iv = 0 ` : ``}
-                    ${ ENABLE_PVP
-                ? `OR 
-                                (
-                                (atk_iv BETWEEN 0 AND 2) AND 
-                                (def_iv BETWEEN 13 AND 15) AND 
-                                (sta_iv BETWEEN 13 AND 15)
-                                )`
-                : ``
-            }
-                    )
                 ORDER BY score desc
                 LIMIT ${limit}`, [])
         lastQueryTimestamp = queryTime
